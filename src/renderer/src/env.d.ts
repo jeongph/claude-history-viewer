@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 
-import type { ClaudeHistoryApi } from '../../shared/types'
+import type { SessionHistoryApi } from '../../shared/types'
 
 declare global {
   interface Window {
-    api: ClaudeHistoryApi
+    api: SessionHistoryApi
   }
 }

@@ -10,6 +10,7 @@ import {
 
 function document(messages: SearchMessage[]): SearchDocument {
   return {
+    provider: 'claude',
     sessionId: 'session-1',
     projectId: 'project-1',
     filePath: '/tmp/session-1.jsonl',
@@ -201,6 +202,7 @@ describe('matchDocument', () => {
   it('세션 식별 정보를 그대로 옮긴다', () => {
     const result = matchDocument(document([{ ref: 'u1', role: 'user', text: '표적' }]), '표적', 5)
     expect(result).toMatchObject({
+      provider: 'claude',
       sessionId: 'session-1',
       projectId: 'project-1',
       filePath: '/tmp/session-1.jsonl',

@@ -1,9 +1,8 @@
-import { mkdir, readdir, readFile, rename, writeFile } from 'fs/promises'
+import { mkdir, readFile, rename, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 import { app, type BrowserWindow } from 'electron'
 import type { SearchHit, SearchProgress, SearchResults, SessionMeta } from '../../shared/types'
-import { listSessions, projectsRoot } from './scanner'
-import { parseConversation } from './parser'
+import { listSessionCatalog, loadConversation } from './sessions'
 import { extractSearchMessages, type SearchMessage } from './searchExtract'
 import {
   foldCase,
@@ -19,7 +18,7 @@ import {
  * 올려야 한다. ref가 파서 출력의 uuid라서, 그대로 두면 저장된 ref가 오류 없이 엉뚱한
  * 메시지를 가리킨다.
  */
-const INDEX_VERSION = 1
+const INDEX_VERSION = 2
 const MAX_SNIPPETS_PER_SESSION = 5
 const MAX_HITS = 200
 /** 검색이 들어올 때마다 전체 정합을 돌리지 않도록 두는 최소 간격 */
@@ -64,6 +63,7 @@ function isStoredDocument(value: unknown): value is StoredDocument {
   const stored = value as StoredDocument | null
   return (
     !!stored &&
+    (stored.provider === 'claude' || stored.provider === 'codex') &&
     typeof stored.sessionId === 'string' &&
     typeof stored.projectId === 'string' &&
     typeof stored.filePath === 'string' &&
@@ -129,27 +129,15 @@ async function persist(): Promise<void> {
   await rename(temporary, path)
 }
 
-/** null이면 루트를 읽지 못한 것이다 — 빈 배열("프로젝트가 없다")과 섞으면 정리 단계가 인덱스를 통째로 비운다 */
-async function listProjectIds(): Promise<string[] | null> {
-  try {
-    const dirents = await readdir(projectsRoot(), { withFileTypes: true })
-    return dirents.filter((dirent) => dirent.isDirectory()).map((dirent) => dirent.name)
-  } catch (error) {
-    // Claude Code를 아직 쓴 적이 없으면 루트가 없는 게 정상이다
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
-    console.error('[search] 프로젝트 루트를 읽지 못했다', error)
-    return null
-  }
-}
-
 async function buildDocument(meta: SessionMeta): Promise<SearchDocument | null> {
-  const conversation = await parseConversation(meta.filePath).catch((error) => {
+  const conversation = await loadConversation(meta.filePath).catch((error) => {
     // 세션 하나가 깨져도 나머지 인덱싱은 계속하되, 조용히 사라지게 두지는 않는다
     console.error('[search] 세션 파싱 실패', meta.filePath, error)
     return null
   })
   if (!conversation) return null
   return {
+    provider: meta.provider,
     sessionId: meta.id,
     projectId: meta.projectId,
     filePath: meta.filePath,
@@ -163,20 +151,14 @@ async function buildDocument(meta: SessionMeta): Promise<SearchDocument | null> 
 }
 
 async function reconcile(): Promise<void> {
-  const projectIds = await listProjectIds()
-  // 루트를 못 읽은 채로 진행하면 아래 정리 단계가 "세션이 전부 사라졌다"로 오판한다
-  if (projectIds === null) throw new Error('search: projects root unreadable')
-  emitProgress(0, projectIds.length)
+  const catalog = await listSessionCatalog()
+  emitProgress(0, catalog.size)
 
   const seen = new Set<string>()
   let changed = false
   let done = 0
 
-  for (const projectId of projectIds) {
-    const metas = await listSessions(projectId).catch((error) => {
-      console.error('[search] 세션 목록을 읽지 못했다', projectId, error)
-      return null
-    })
+  for (const [projectId, metas] of catalog) {
     if (metas === null) {
       // 목록을 못 읽었을 뿐이므로, 이 프로젝트의 기존 문서를 사라진 것으로 취급하지 않는다
       for (const document of documents.values()) {
@@ -196,7 +178,7 @@ async function reconcile(): Promise<void> {
       }
     }
     done += 1
-    emitProgress(done, projectIds.length)
+    emitProgress(done, catalog.size)
     // 메타가 전부 캐시에 걸리면 프로젝트 루프가 거의 동기로 돈다. 그때도 렌더러 IPC가
     // 끼어들 틈이 생기도록 프로젝트마다 한 번 넘긴다
     await new Promise((resolve) => setImmediate(resolve))
@@ -212,7 +194,7 @@ async function reconcile(): Promise<void> {
   failed = false
   lastReconcileAt = Date.now()
   if (changed) revision += 1
-  emitProgress(done, projectIds.length)
+  emitProgress(done, catalog.size)
   if (changed) {
     await persist().catch((error) => console.error('[search] 인덱스 저장 실패', error))
   }

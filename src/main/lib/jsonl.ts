@@ -19,6 +19,7 @@ export async function forEachJsonlLine(
       } catch {
         continue
       }
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue
       if (onEntry(entry) === false) break
     }
   } finally {

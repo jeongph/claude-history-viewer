@@ -1,15 +1,15 @@
 import { readdir, stat } from 'fs/promises'
-import { homedir } from 'os'
 import { basename, join } from 'path'
 import type { ProjectInfo, SessionMeta, SessionOrigin } from '../../shared/types'
 import { forEachJsonlLine, readHead } from './jsonl'
 import { getMessage, isRealUserPrompt, summarize } from './entries'
 import { originFromEntrypoint } from './sessionOrigin'
 import { detectRepo } from './repo'
+import { claudeRoot } from './sessionPaths'
 
 export function projectsRoot(): string {
   // CHV_DATA_DIR: 개발·데모용 데이터 디렉토리 오버라이드
-  return process.env.CHV_DATA_DIR ?? join(homedir(), '.claude', 'projects')
+  return claudeRoot()
 }
 
 /** Claude Code 는 cwd 의 영숫자 아닌 글자를 전부 '-'로 바꿔 프로젝트 디렉터리명을 만든다 */
@@ -189,6 +189,7 @@ async function readSessionMeta(
   })
 
   const meta: SessionMeta = {
+    provider: 'claude',
     id: basename(filePath, '.jsonl'),
     projectId,
     filePath,
@@ -208,7 +209,10 @@ async function readSessionMeta(
 
 export async function listSessions(projectId: string): Promise<SessionMeta[]> {
   const dirPath = join(projectsRoot(), projectId)
-  const files = await readdir(dirPath).catch(() => [])
+  const files = await readdir(dirPath).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return []
+    throw error
+  })
   const metas: SessionMeta[] = []
   for (const file of files) {
     if (!file.endsWith('.jsonl')) continue
