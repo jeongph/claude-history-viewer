@@ -25,7 +25,9 @@ export async function sessionFileProvider(filePath: string): Promise<SessionProv
   if (typeof filePath !== 'string' || !filePath.endsWith('.jsonl')) return null
   const path = resolve(filePath)
   const actual = await realpath(path).catch(() => null)
-  if (!actual || !(await stat(actual)).isFile()) return null
+  if (!actual) return null
+  const info = await stat(actual).catch(() => null)
+  if (!info?.isFile()) return null
   for (const [provider, root] of [
     ['claude', claudeRoot()],
     ['codex', codexRoot()]
