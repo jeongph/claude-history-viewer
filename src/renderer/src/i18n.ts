@@ -5,7 +5,7 @@ export type Lang = 'ko' | 'en'
 const ko = {
   'sidebar.search': '세션·폴더 검색 ({find})',
   'sidebar.loading': '불러오는 중…',
-  'sidebar.empty': '~/.claude/projects 에서\n세션을 찾지 못했습니다.',
+  'sidebar.empty': 'Claude Code · Codex의 로컬 세션을\n찾지 못했습니다.',
   'sidebar.collapse': '사이드바 접기',
   'sidebar.expand': '사이드바 펼치기',
   'sidebar.loadFailed': '세션 목록을 불러오지 못했습니다. 다시 펼치면 재시도합니다',
@@ -33,6 +33,7 @@ const ko = {
   'empty.title': '왼쪽에서 세션을 선택하세요',
   'empty.hint': '{find} 세션 목록 좁히기 · {search} 대화 내용 검색',
   'action.resume': '터미널에서 이어가기',
+  'action.delete.codexHint': 'Codex 세션 삭제·보관은 Codex에서 관리해 주세요.',
   'action.resume.hint': '터미널에서 이 세션을 이어서 연다',
   'action.fork': 'Fork로 열기',
   'action.fork.hint': '새 세션 ID로 분기해 연다',
@@ -116,7 +117,7 @@ const ko = {
 const en: Record<MessageKey, string> = {
   'sidebar.search': 'Filter sessions & folders ({find})',
   'sidebar.loading': 'Loading…',
-  'sidebar.empty': 'No sessions found in\n~/.claude/projects.',
+  'sidebar.empty': 'No local Claude Code or Codex\nsessions found.',
   'sidebar.collapse': 'Collapse sidebar',
   'sidebar.expand': 'Expand sidebar',
   'sidebar.loadFailed': 'Could not load the session list. Expand again to retry',
@@ -144,6 +145,7 @@ const en: Record<MessageKey, string> = {
   'empty.title': 'Select a session from the sidebar',
   'empty.hint': '{find} to filter sessions · {search} to search conversations',
   'action.resume': 'Resume in terminal',
+  'action.delete.codexHint': 'Manage deletion and archiving of Codex sessions in Codex.',
   'action.resume.hint': 'Reopen this session in a terminal',
   'action.fork': 'Open as fork',
   'action.fork.hint': 'Branch off with a new session ID',

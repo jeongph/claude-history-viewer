@@ -1,4 +1,4 @@
-import type { SearchHit, SearchSnippet, SessionMeta } from '../../shared/types'
+import type { SearchHit, SearchSnippet, SessionMeta, SessionProvider } from '../../shared/types'
 import type { SearchMessage } from './searchExtract'
 
 /**
@@ -34,6 +34,7 @@ export interface IndexedMessage extends SearchMessage {
 }
 
 export interface SearchDocument {
+  provider: SessionProvider
   sessionId: string
   projectId: string
   filePath: string
@@ -115,6 +116,7 @@ export function matchDocument(
   }
   if (matchCount === 0) return null
   return {
+    provider: document.provider,
     sessionId: document.sessionId,
     projectId: document.projectId,
     filePath: document.filePath,

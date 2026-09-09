@@ -172,7 +172,9 @@ export function SearchPalette({
                   <span className="snippet__role">
                     {row.snippet.role === 'user'
                       ? t('search.role.user')
-                      : t('search.role.assistant')}
+                      : row.hit.provider === 'codex'
+                        ? 'Codex'
+                        : t('search.role.assistant')}
                   </span>
                   <span className="snippet__text">
                     {row.snippet.before}

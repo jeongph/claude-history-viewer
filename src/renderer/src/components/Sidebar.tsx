@@ -14,7 +14,7 @@ interface Props {
   projects: ProjectInfo[]
   sessions: Record<string, SessionMeta[]>
   expanded: Set<string>
-  selectedSessionId: string | null
+  selectedSessionPath: string | null
   query: string
   searchRef: RefObject<HTMLInputElement | null>
   onQueryChange: (query: string) => void
@@ -83,12 +83,12 @@ function visibleSessions(
 
 function SessionList({
   items,
-  selectedSessionId,
+  selectedSessionPath,
   onSelectSession,
   onSessionMenu
 }: {
   items: SessionMeta[] | undefined
-  selectedSessionId: string | null
+  selectedSessionPath: string | null
   onSelectSession: (session: SessionMeta) => void
   onSessionMenu: (session: SessionMeta) => void
 }): ReactElement {
@@ -97,9 +97,9 @@ function SessionList({
     <ul className="session-list">
       {items === undefined && <li className="session-list__loading">{t('sidebar.loading')}</li>}
       {items?.map((session) => (
-        <li key={session.id}>
+        <li key={session.filePath}>
           <button
-            className={`session${session.id === selectedSessionId ? ' is-selected' : ''}`}
+            className={`session${session.filePath === selectedSessionPath ? ' is-selected' : ''}`}
             onClick={() => onSelectSession(session)}
             onContextMenu={(event) => {
               event.preventDefault()
@@ -108,6 +108,9 @@ function SessionList({
           >
             <span className="session__title">{session.title}</span>
             <span className="session__meta">
+              <span className="session__badge">
+                {session.provider === 'codex' ? 'Codex' : 'Claude'}
+              </span>
               {session.origin === 'agent' && (
                 <span className="session__badge">{t('session.autoBadge')}</span>
               )}
@@ -125,7 +128,7 @@ export function Sidebar({
   projects,
   sessions,
   expanded,
-  selectedSessionId,
+  selectedSessionPath,
   query,
   searchRef,
   onQueryChange,
@@ -201,7 +204,7 @@ export function Sidebar({
               {open && group.roots.length > 0 && (
                 <SessionList
                   items={rootVisible}
-                  selectedSessionId={selectedSessionId}
+                  selectedSessionPath={selectedSessionPath}
                   onSelectSession={onSelectSession}
                   onSessionMenu={onSessionMenu}
                 />
@@ -231,7 +234,7 @@ export function Sidebar({
                       {subOpen && (
                         <SessionList
                           items={visible}
-                          selectedSessionId={selectedSessionId}
+                          selectedSessionPath={selectedSessionPath}
                           onSelectSession={onSelectSession}
                           onSessionMenu={onSessionMenu}
                         />

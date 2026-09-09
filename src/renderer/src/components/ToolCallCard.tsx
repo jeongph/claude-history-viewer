@@ -17,9 +17,13 @@ function firstString(input: Record<string, unknown>, keys: string[]): string | n
 }
 
 function summarizeInput(name: string, input: unknown, t: Translate): string {
+  if (typeof input === 'string') return input.split('\n')[0].slice(0, 160)
   if (!input || typeof input !== 'object') return ''
   const record = input as Record<string, unknown>
   switch (name) {
+    case 'exec_command':
+    case 'functions.exec_command':
+      return firstString(record, ['cmd', 'command']) ?? ''
     case 'Bash':
       return firstString(record, ['command']) ?? ''
     case 'Read':
@@ -48,6 +52,7 @@ function summarizeInput(name: string, input: unknown, t: Translate): string {
 
 function formatInput(input: unknown): string {
   if (input == null) return ''
+  if (typeof input === 'string') return input
   try {
     return JSON.stringify(input, null, 2)
   } catch {

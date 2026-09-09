@@ -1,6 +1,8 @@
 /** 세션을 만든 주체. 'agent'는 도구가 SDK로 띄운 헤드리스 세션이다. */
 export type SessionOrigin = 'user' | 'agent'
 
+export type SessionProvider = 'claude' | 'codex'
+
 /**
  * 저장소 루트가 아닌 프로젝트가 루트와 맺는 관계.
  * - worktree: 도구가 만든 워크트리 자리. 살아 있으면 .git 으로, 지워졌으면 경로 모양으로 판정한다
@@ -47,6 +49,7 @@ export interface ProjectInfo {
 }
 
 export interface SessionMeta {
+  provider: SessionProvider
   id: string
   projectId: string
   filePath: string
@@ -182,6 +185,7 @@ export interface SearchSnippet {
 }
 
 export interface SearchHit {
+  provider: SessionProvider
   sessionId: string
   projectId: string
   filePath: string
@@ -220,13 +224,21 @@ export interface SearchProgress {
   failed: boolean
 }
 
-export interface ClaudeHistoryApi {
+export interface SessionHistoryApi {
   listProjects: () => Promise<ProjectInfo[]>
   listSessions: (projectId: string) => Promise<SessionMeta[]>
   loadConversation: (filePath: string) => Promise<Conversation>
   searchSessions: (query: string) => Promise<SearchResults>
-  resumeSession: (sessionId: string, cwd: string | null) => Promise<ActionResult>
-  forkSession: (sessionId: string, cwd: string | null) => Promise<ActionResult>
+  resumeSession: (
+    sessionId: string,
+    cwd: string | null,
+    provider: SessionProvider
+  ) => Promise<ActionResult>
+  forkSession: (
+    sessionId: string,
+    cwd: string | null,
+    provider: SessionProvider
+  ) => Promise<ActionResult>
   deleteSession: (filePath: string) => Promise<ActionResult>
   revealSession: (filePath: string) => Promise<ActionResult>
   openExternal: (url: string) => Promise<void>
@@ -239,6 +251,7 @@ export interface ClaudeHistoryApi {
   showSessionMenu: (labels: {
     reveal: string
     delete: string
+    canDelete: boolean
   }) => Promise<'reveal' | 'delete' | null>
   /** 승인만 전달한다 — 완료가 아니라 시작이다. 진행·완료·실패는 update:event 로 온다 */
   downloadUpdate: () => Promise<void>

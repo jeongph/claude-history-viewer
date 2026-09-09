@@ -313,10 +313,11 @@ export default function App(): ReactElement {
     async (session: SessionMeta) => {
       const choice = await window.api.showSessionMenu({
         reveal: t('menu.reveal'),
-        delete: t('menu.delete')
+        delete: t('menu.delete'),
+        canDelete: session.provider === 'claude'
       })
       if (choice === 'reveal') window.api.revealSession(session.filePath)
-      else if (choice === 'delete') setDeleteTarget(session)
+      else if (choice === 'delete' && session.provider === 'claude') setDeleteTarget(session)
     },
     [t]
   )
@@ -349,7 +350,7 @@ export default function App(): ReactElement {
   const openHit = useCallback(
     async (hit: SearchHit, ref: string) => {
       // 사이드바 목록은 프로젝트당 한 번만 읽어 두므로, 그 뒤 생긴 세션은 검색에만 잡힌다
-      let session = sessions[hit.projectId]?.find((meta) => meta.id === hit.sessionId)
+      let session = sessions[hit.projectId]?.find((meta) => meta.filePath === hit.filePath)
       if (!session) {
         let metas: SessionMeta[]
         try {
@@ -362,7 +363,7 @@ export default function App(): ReactElement {
         }
         loadedProjects.current.add(hit.projectId)
         setSessions((previous) => ({ ...previous, [hit.projectId]: metas }))
-        session = metas.find((meta) => meta.id === hit.sessionId)
+        session = metas.find((meta) => meta.filePath === hit.filePath)
       }
       if (!session) {
         showToast(t('search.missing'))
@@ -395,7 +396,7 @@ export default function App(): ReactElement {
       if (!selected) return
       const cwd = selected.cwd ?? selectedProject?.realPath ?? null
       const action = kind === 'resume' ? window.api.resumeSession : window.api.forkSession
-      const result = await action(selected.id, cwd)
+      const result = await action(selected.id, cwd, selected.provider)
       if (result.ok) {
         showToast(kind === 'resume' ? t('toast.resume') : t('toast.fork'))
       } else {
@@ -429,7 +430,7 @@ export default function App(): ReactElement {
           : p
       )
     )
-    if (selected?.id === target.id) {
+    if (selected?.filePath === target.filePath) {
       setSelected(null)
       setConversation(null)
     }
@@ -452,7 +453,7 @@ export default function App(): ReactElement {
           projects={projects}
           sessions={sessions}
           expanded={expanded}
-          selectedSessionId={selected?.id ?? null}
+          selectedSessionPath={selected?.filePath ?? null}
           query={query}
           searchRef={searchRef}
           onQueryChange={setQuery}

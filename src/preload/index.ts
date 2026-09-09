@@ -1,13 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ClaudeHistoryApi, SearchProgress, UpdateEvent } from '../shared/types'
+import type { SessionHistoryApi, SearchProgress, UpdateEvent } from '../shared/types'
 
-const api: ClaudeHistoryApi = {
+const api: SessionHistoryApi = {
   listProjects: () => ipcRenderer.invoke('projects:list'),
   listSessions: (projectId) => ipcRenderer.invoke('sessions:list', projectId),
   loadConversation: (filePath) => ipcRenderer.invoke('conversation:load', filePath),
   searchSessions: (query) => ipcRenderer.invoke('search:query', query),
-  resumeSession: (sessionId, cwd) => ipcRenderer.invoke('session:resume', sessionId, cwd),
-  forkSession: (sessionId, cwd) => ipcRenderer.invoke('session:fork', sessionId, cwd),
+  resumeSession: (sessionId, cwd, provider) =>
+    ipcRenderer.invoke('session:resume', sessionId, cwd, provider),
+  forkSession: (sessionId, cwd, provider) =>
+    ipcRenderer.invoke('session:fork', sessionId, cwd, provider),
   deleteSession: (filePath) => ipcRenderer.invoke('session:delete', filePath),
   revealSession: (filePath) => ipcRenderer.invoke('session:reveal', filePath),
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),

@@ -60,6 +60,9 @@ export function ConversationView({
         <div className="conversation__heading">
           <h1 title={session.title}>{session.title}</h1>
           <p className="conversation__meta">
+            <span className="session__badge">
+              {session.provider === 'codex' ? 'Codex' : 'Claude'}
+            </span>
             {cwd && <span>{shortenPath(cwd)}</span>}
             {session.gitBranch && <span className="conversation__branch">{session.gitBranch}</span>}
             <span>{formatFullDate(session.updatedAt)}</span>
@@ -80,7 +83,12 @@ export function ConversationView({
           <button className="btn" onClick={onReveal} title={t('action.reveal.hint')}>
             {t('action.reveal')}
           </button>
-          <button className="btn btn--danger" onClick={onDelete}>
+          <button
+            className="btn btn--danger"
+            onClick={onDelete}
+            disabled={session.provider === 'codex'}
+            title={session.provider === 'codex' ? t('action.delete.codexHint') : undefined}
+          >
             {t('action.delete')}
           </button>
         </div>
